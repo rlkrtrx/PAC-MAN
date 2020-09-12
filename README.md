@@ -1,7 +1,7 @@
 # PAC-MAN
 An attempt of remaking the iconic chase through the dark city 
 
-[Screenshot](https://github.com/rlkrtrx/PAC-MAN/blob/master/img/Preview.png)
+![Screenshot](https://github.com/rlkrtrx/PAC-MAN/blob/master/img/Preview.png =75x)
 
 ## Requirements 
 
