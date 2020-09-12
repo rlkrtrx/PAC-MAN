@@ -1,11 +1,20 @@
-# PAC-MZE
+# PAC-MAN
+An attempt of remaking the iconic chase through the dark city 
 
-A programmer's attempt to recreate one of the most notable games in history, Pac-Man.
+## Requirements 
 
-Ghost Algorithm Explanation: 
+I compiled the project on MacOS, therefore if you are to come
+from a different OS, make sure to change the makefile and 
+adjust the code accordingly.
 
-https://pgnotes.me/index.php?action=view_post&title=Dark%20City%20Chase
+ - GLFW3+ for input and output
+ - GL3W headers for OpenGL
+ - QDBMP for reading BMPs
+ - linmath for Linear Transformations and Matrices
+ - stb_image.h for loading PNGs
 
-![Screenshot](https://github.com/rlkrtrx/PAC-MZE/Preview.png)
+## License 
+[MIT](https://github.com/rlkrtrx/PAC-MAN/blob/master/LICENSE)
+
 
 
