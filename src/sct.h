@@ -79,7 +79,15 @@ sct Sct(void)
   s.stack_head = (struct stack_node*)malloc(sizeof(struct stack_node));
   s.stack_head->gnode_ptr = NULL;
   s.stack_head->next = NULL;
-  //printf("Best Direction: %d\n", shortest_path(s.g_map, 26, 1, 6, 5, s.lvl.w, s.lvl.h, s.stack_head));
+  printf("Best Direction: ");
+  print_direction(shortest_path(s.g_map, 18, 11, 26, 1, s.lvl.w, s.lvl.h, s.stack_head));
+  printf("\n");
+  //print_direction(shortest_path(s.g_map, 21, 5, 26, 1, s.lvl.w, s.lvl.h, s.stack_head));
+  printf("\n");
+  if(s.g_map[18+5*s.lvl.w]/*->neighbours[2]*/)
+    printf("Exists!\n");
+  else
+    printf("Exist!\n");
   center_tb(&s.high_score_box, WINDOW_WIDTH);
   return s;	
 }
@@ -107,7 +115,7 @@ void run(sct* s)
     s->lt = glfwGetTime();
     get_in(s);
     update_pacman_spr(s->pacman, s->ghosts, s->dt, s->lvl, &s->ctotal);
-    update_ghosts(s->ghosts,s->pac_map, s->box_map, s->g_map, s->g_list, s->stack_head, s->dt, s->lvl);
+    //update_ghosts(s->ghosts,s->pac_map, s->box_map, s->g_map, s->g_list, s->stack_head, s->dt, s->lvl);
 		render_tex_quad(s->pacPrg, s->lvl.map_vao, s->lvl.map_tex, 0, TLSZ, s->ortho);
     render_coins(s->lvl, s->ortho, s->pacPrg);
     render_moveable_spr(s->pacman, s->ghosts, s->pacPrg, s->ortho);

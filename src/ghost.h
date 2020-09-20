@@ -224,7 +224,10 @@ void set_ghost_direction(ghost* g, map m, struct g_node** g_map, struct g_node_l
   switch(g->mode)
   {
   case CHASE:
+  if(!g->s->wantDirection && !g->s->direction)
+  {
     set_path(g, g_map, list, stack_head, m.w, m.h, 26, 1);
+  }
     break;
   case HOME:
     break;

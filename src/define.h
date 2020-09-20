@@ -25,4 +25,25 @@
 #define D 1
 #define L -1
 
+void print_direction(int dir)
+{
+    switch(dir)
+    {
+        case UP:
+        printf("UP");
+        break;
+        case RIGHT:
+        printf("RIGHT");
+        break;
+        case DOWN:
+        printf("DOWN");
+        break;
+        case LEFT:
+            printf("LEFT");
+        break;
+        default:
+        break;
+    }
+}
+
 #endif
