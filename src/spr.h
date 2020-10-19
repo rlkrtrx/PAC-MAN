@@ -26,7 +26,7 @@ typedef struct ghostStruct
 {
   spr* s; // Spr for render data, position and size. Trying to reuse the struct
   struct ghostStruct* nxt; // Pointer to next ghost size. To iterate through all the ghost in order to update them.
-  int type, mode;
+  int type, mode, last_x, last_y;
   int* last_contact;
 }ghost;
 
@@ -101,6 +101,16 @@ float posY(spr s)
   return (int)((s.y+TLSZ/2)/TLSZ)*TLSZ;
 }
 
+int x(spr s)
+{
+  return (int)((s.x+TLSZ/2)/TLSZ);
+}
+
+int y(spr s)
+{
+  return (int)((s.y+TLSZ/2)/TLSZ);
+}
+
 int oob(spr s, map m)
 {
   int x = posX(s)/TLSZ;
@@ -108,11 +118,6 @@ int oob(spr s, map m)
   if(x < 0 || y < 0 || x >= m.w || y >= m.h)
           return 1;
   return 0;
-}
-
-int posUx(spr s)
-{
-  return (int)((s.x+TLSZ/2)/TLSZ);
 }
 
 int posUy(spr s)
@@ -125,16 +130,6 @@ int posRx(spr s)
   return (int)((s.x+TLSZ/2+TLSZ)/TLSZ);
 }
 
-int posRy(spr s)
-{
-  return (int)((s.y+TLSZ/2)/TLSZ);
-}
-
-int posDx(spr s)
-{
-  return (int)((s.x+TLSZ/2)/TLSZ);
-}
-
 int posDy(spr s)
 {
   return (int)((s.y+TLSZ/2+TLSZ)/TLSZ);
@@ -145,14 +140,9 @@ int posLx(spr s)
   return (int)((s.x+TLSZ/2-TLSZ)/TLSZ);
 }
 
-int posLy(spr s)
-{
-  return (int)((s.y+TLSZ/2)/TLSZ);
-}
-
 int goDown(spr* s, map m, int box_avail)
 {
-  if(!m.tileMap[posDy(*s)*m.w+posDx(*s)] || (box_avail&&m.tileMap[posDy(*s)*m.w+posDx(*s)]==4))
+  if(!m.tileMap[posDy(*s)*m.w+x(*s)] || (box_avail&&m.tileMap[posDy(*s)*m.w+x(*s)]==4))
   {
     s->x = posX(*s);
     return 1;
@@ -162,7 +152,7 @@ int goDown(spr* s, map m, int box_avail)
 
 int goUp(spr* s, map m, int box_avail)
 {
-  if(!m.tileMap[posUy(*s)*m.w+posUx(*s)] || (box_avail&&m.tileMap[posUy(*s)*m.w+posUx(*s)]==4))
+  if(!m.tileMap[posUy(*s)*m.w+x(*s)] || (box_avail&&m.tileMap[posUy(*s)*m.w+x(*s)]==4))
   {
           s->x = posX(*s);
           return 1;
@@ -172,7 +162,7 @@ int goUp(spr* s, map m, int box_avail)
 
 int goRight(spr* s, map m, int box_avail)
 {
-  if(!m.tileMap[posRy(*s)*m.w+posRx(*s)] || (box_avail && m.tileMap[posRy(*s)*m.w+posRx(*s)]==4))
+  if(!m.tileMap[y(*s)*m.w+posRx(*s)] || (box_avail && m.tileMap[y(*s)*m.w+posRx(*s)]==4))
   {
           s->y = posY(*s);
           return 1;
@@ -182,7 +172,7 @@ int goRight(spr* s, map m, int box_avail)
 
 int goLeft(spr* s, map m, int box_avail)
 {
-  if(!m.tileMap[posLy(*s)*m.w+posLx(*s)] || (box_avail && m.tileMap[posLy(*s)*m.w+posLx(*s)]==4))
+  if(!m.tileMap[y(*s)*m.w+posLx(*s)] || (box_avail && m.tileMap[y(*s)*m.w+posLx(*s)]==4))
   {
     s->y = posY(*s);
     return 1;
@@ -192,28 +182,19 @@ int goLeft(spr* s, map m, int box_avail)
 
 int want_direction_valid(spr* s, int want_direction, map m, int box_avail)
 {
-  if(!want_direction)
-    return 0;
+  if(oob(*s, m))
+    return 1;
   switch(want_direction)
   {
   case UP:
-    if(goUp(s, m, box_avail) || oob(*s, m))
-      return 1;
-    break;
+    return goUp(s, m, box_avail);
   case RIGHT:
-    if(goRight(s, m, box_avail) || oob(*s, m))
-      return 1;
-    break;
+    return goRight(s, m, box_avail);
   case DOWN:
-    if(goDown(s, m, box_avail) || oob(*s, m))
-      return 1;
-    break;
+    return goDown(s, m, box_avail);
   case LEFT:
-    if(goLeft(s, m, box_avail) || oob(*s, m))
-      return 1;
-    break;
+    return goLeft(s, m, box_avail);
   default:
-    return 0;
     break;
   }
   return 0;

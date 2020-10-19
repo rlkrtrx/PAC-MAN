@@ -125,15 +125,10 @@ map Map(const char* mapBmpPath)
   }
 	BMP_Free(img);
   m.amo = amo;
-  //m.mtcs = (mat4x4*)malloc(amo * sizeof(mat4x4));
-  //m.tmtcs = (mat4x4*)malloc(amo * sizeof(mat4x4));
   m.tm = create_tile_list(m.tileMap, m.w, m.h, &m.box_x, &m.box_y, &m.box_w, &m.box_h);
 	m.map_tex = GenMapTex("img/tile.bmp", m.tm, 28, 31);
 	m.map_vao = make_quad(TLSZ*28, TLSZ*31, 1, 1);
   free_tile_list(m.tm);
-  //m.tmtcs = create_tex_mat_list(m.tm);
-  //m.mtcs = create_model_mat_list(m.tm);
-  //m.vrtobj = make_tile_inst(TLSZ, TLSZ, &m.mtcs[0],  &m.tmtcs[0], amo, 5.0f, 3.0f); 
   m.tex = make_tex("img/tile.bmp", GL_RGB);
 	m.coin_tex = (GLuint*)malloc(2*sizeof(GLuint));
 	BMP* img_bmp = BMP_ReadFile("img/tile.bmp");
@@ -180,6 +175,7 @@ struct g_node
   uint16_t x, y;
   uint32_t d, c; // Distance and Change, respectively.
   unsigned int parent:4;
+  int visited;
   struct g_node** neighbours;
 };
 
@@ -208,7 +204,8 @@ struct g_node* init_graph_node(int x, int y)
   ret_g->y = y;
   ret_g->d = 0xFFFF;
   ret_g->c = 0xFFFF; 
-  ret_g->parent = 0;
+  ret_g->parent = 5;
+  ret_g->visited = 0;
   return ret_g;
 }
 
@@ -236,37 +233,26 @@ struct g_node* ret_map_graph(int* map, struct g_node** g_map, int w, int h)
         left_node = NULL;
         break;
       case FALSE:
-        if(contact_array[0]!=contact_array[1] && contact_array[0] != contact_array[3]) //Check if one finds themselves at an intersection
-        {
-          if(i == 18 && j == 11)
-            printf("WEIRD\n");
+        if((contact_array[0]!=contact_array[1] && contact_array[0] != contact_array[3])&&(contact_array[2]!=contact_array[1] && contact_array[2] != contact_array[3])) //Check if one finds themselves at an intersection
           continue;
-        }
         if(!root)
         {
           root = init_graph_node(i, j);
           current = root;
         }
         else
-        {
           current = init_graph_node(i, j);
-          printf("%d %d\n", i, j);
-        }
         if(left_node)
         {
-          printf("  yes\n");
           left_node->neighbours[RIGHT-1] = current;
           current->neighbours[LEFT-1] = left_node;
 
         }
         if(top_nodes[i])
         {
-          printf("  yes\n");
           top_nodes[i]->neighbours[DOWN-1] = current; 
           current->neighbours[UP-1] = top_nodes[i];
         }
-        else
-          printf("  no\n");
         g_map[j*w+i] = current;
         //Check for a left node and connect if one finds themselves at an intersection
         left_node = current; //Assign left node to g for the next intersection
@@ -286,7 +272,7 @@ struct g_node* ret_map_graph(int* map, struct g_node** g_map, int w, int h)
 void graph_to_list(struct g_node_list* list, struct g_node** g_map, int w, int h)
 {
   for(int i = 0; i < w*h; i++)
-    if(g_map[i])
+    if(g_map[i]!=NULL)
       add_g_node(list, g_map[i]);
 }
 
@@ -296,76 +282,23 @@ struct stack_node
   struct stack_node* next;
 };
 
-void push(struct stack_node** head, struct g_node* ptr)
+void push(struct stack_node* head, struct g_node* ptr)
 {
-  if(!(*head))
-  {
-    *head = (struct stack_node*)malloc(sizeof(struct stack_node));
-    (*head)->next = NULL;
-    (*head)->gnode_ptr = ptr;
-    return;
-  }
-  if(!(*head)->gnode_ptr)
-  {
-    (*head)->gnode_ptr = ptr;
-    return;
-  }
-  if((*head)->gnode_ptr->d>ptr->d)
-  {
-    struct stack_node* new_node = (struct stack_node*)malloc(sizeof(struct stack_node));
-    new_node->next = *head;
-    new_node->gnode_ptr = ptr;
-    *head = new_node;
-    return;
-  }
-  struct stack_node* current = *head;
-  while(current->next && current->next->gnode_ptr->d < ptr->d)
+  struct stack_node* current = head;
+  while(current->next && current->next->gnode_ptr->d+current->next->gnode_ptr->c < ptr->d+ptr->c)
     current = current->next;
   struct stack_node* new_node = (struct stack_node*)malloc(sizeof(struct stack_node));
-  new_node->next = current->next;
+  new_node->next = NULL;
   new_node->gnode_ptr = ptr;
-  current->next = new_node;
-  /*if(!(*head)->gnode_ptr)
-  { 
-    printf("Uninitialized Start.\n\n");
-    (*head)->gnode_ptr = ptr;
-    return;
-  }
-  if(ptr->d < (*head)->gnode_ptr->d) 
-  {
-    printf("Start.\n\n");
-    struct stack_node* new_node = (struct stack_node*)malloc(sizeof(struct stack_node));
-    new_node->next = *head;
-    new_node->gnode_ptr = ptr;
-    (*head) = new_node;
-    return;
-  }
-  printf("Regular.\n\n");
-  struct stack_node* current = *head;
-  while(current->next && current->next->gnode_ptr->d < ptr->d)
-    current = current->next;
   if(current->next)
-  {
-    struct stack_node* tmp_node = current->next;
-    struct stack_node* new_node = (struct stack_node*)malloc(sizeof(struct stack_node));
-    new_node->next = tmp_node;
-    new_node->gnode_ptr = ptr;
-    current->next = new_node;
-    return;
-  }
-  else
-  {
-    current->next = (struct stack_node*)malloc(sizeof(struct stack_node));
-    current->next->next = NULL;
-    current->gnode_ptr = ptr;
-    return;
-  }*/
+    new_node->next = current->next->next;  
+  current->next = new_node;
 }
 
-void pop(struct stack_node** head)
+void pop(struct stack_node* head)
 {
-  struct stack_node* temp = *head;
-  *head = (*head)->next;
+  struct stack_node* temp = head->next;
+  head->next = head->next->next;
   free(temp);
 }
 
@@ -374,9 +307,12 @@ void clear_list(struct g_node_list* list)
   struct g_node_list* current = list;
   while(current->next_node!=NULL)
   {
-    current->next_node->gnode_ptr->d = 0;
-    current->next_node->gnode_ptr->c = 0;
-    current->next_node->gnode_ptr->parent = 0;
+    printf("clearing..\n");
+    printf("%d %d\n", current->next_node->gnode_ptr->x, current->next_node->gnode_ptr->y);
+    current->next_node->gnode_ptr->d = 0xFFFF;
+    current->next_node->gnode_ptr->c = 0xFFFF;
+    current->next_node->gnode_ptr->parent = 5;
+    current->next_node->gnode_ptr->visited = 0;
     current = current->next_node;
   }
 }
@@ -386,14 +322,17 @@ int distance(int x1, int y1, int x2, int y2)
   return (x2-x1)*(x2-x1)+(y2-y1)*(y2-y1);
 }
 
+int perpendicular_distance(struct g_node* root, struct g_node* new_node)
+{
+  return root->x == new_node->x ? abs(root->y - new_node->y) : abs(root->x - new_node->x);
+}
+
 void proc_neighbour(struct g_node* root, struct g_node* neighbour, struct g_node* dest)
 {
-  neighbour->c = root->x == neighbour->x ? abs(root->y - neighbour->y) : abs(root->x - neighbour->x);
-  //printf("Distance: %d\n", distance(neighbour->x, neighbour->y, dest->x, dest->y));
-  neighbour->d = distance(neighbour->x, neighbour->y, dest->x, dest->y);
-  //printf("Root: %d %d Neighbour: %d %d\n", root->x, root->y, neighbour->x, neighbour->y);
-  neighbour->parent = (root->x == neighbour->x ? (root->y - neighbour->y < 0 ? UP : DOWN) : (root->x - neighbour->x < 0 ? RIGHT : LEFT))-1;  
-  //printf("Parent: %d\n", neighbour->parent);
+  neighbour->c = root->c + root->x == neighbour->x ? abs(root->y - neighbour->y) : abs(root->x - neighbour->x);
+  neighbour->d = distance(neighbour->x, neighbour->y, dest->x, dest->y)+neighbour->c;
+  neighbour->parent = (root->x == neighbour->x ? (root->y - neighbour->y < 0 ? UP : DOWN) : (root->x - neighbour->x < 0 ? LEFT : RIGHT))-1;  
+  neighbour->visited = 1;
 }
 
 void list_stack(struct stack_node* head)
@@ -414,70 +353,66 @@ void list_stack(struct stack_node* head)
 
 void clear_stack(struct stack_node* head)
 {
-  printf("Clearing...\n");
-  struct stack_node** watcher = &head;
-  while(*watcher)
-  {
-    printf("Popping\n");
-    pop(&(*watcher));
-  }
-  head = (struct stack_node*)malloc(sizeof(struct stack_node));
-  head->next = NULL;
-  head->gnode_ptr = NULL;
+  struct stack_node* current = head;
+  while(head->next != NULL)
+    pop(head);
 }
 
-int shortest_path(struct g_node** g_map, int si, int sj, int di, int dj, int w, int h, struct stack_node* global)
+void print_map(struct g_node** g_map, int* map, int w, int h)
+{
+  for(int j = 0; j < h; j++)
+  {
+    for(int i = 0; i < w; i++)
+    {
+      if(g_map[i+j*w])
+        printf("X ");
+      else if(map[i+j*w])
+        printf("O ");
+      else
+        printf("  ");
+    }
+    printf("\n");
+  }
+}
+
+int shortest_path(struct g_node** g_map, int si, int sj, int di, int dj, int w, int h, struct stack_node* global, struct g_node_list* g_list)
 {
   struct g_node *start_node, *end_node;
   if(!(start_node = g_map[sj*w+si]) || !(end_node = g_map[dj*w+di]))
     return 0;
   start_node->d = distance(si, sj, di, dj);
   start_node->c = 0;
-  printf("E%d %d\n", end_node->x, end_node->y);
-  //list_stack(global);
-  push(&global, start_node);
-  //list_stack(global);
-  
+  start_node->visited = 1;
+  push(global, start_node);
+
   int achieved = 0;
   int steps = 0;
-  struct g_node** check_node;
-  while(!achieved)
+  struct g_node** check_node = &global->next->gnode_ptr;
+  while(*check_node != end_node && global->next != NULL)
   {
-    check_node = &global->gnode_ptr;
-
-    if(*check_node == end_node)  
-    {
-      printf("steps %d\n", steps);
-      achieved = 1;
-      break;
-    }
-    //list_stack(global);
-    printf("P %d %d\n", global->gnode_ptr->x, global->gnode_ptr->y);
-    pop(&global);
+    check_node = &global->next->gnode_ptr;
+    printf("%d %d\n", (*check_node)->x, (*check_node)->y);
+    pop(global);
     steps++;
 
     struct g_node* check = *check_node; 
-
+    if(!check)
+      continue;
     for(int i = 0; i < 4; i++)
     {
-      if(!check)
-        break;
-      if(check->neighbours[i] == NULL || (check->neighbours[i]->c <= (check->x == check->neighbours[i]->x ? abs(check->y - check->neighbours[i]->y) : abs(check->x - check->neighbours[i]->x))))
-      {
-        if(check->neighbours[i] == NULL)
-          printf("   not worked %d\n", i);
+      if((check->neighbours[i] == NULL) || (check->neighbours[i]->visited))
         continue;
-      }
-      proc_neighbour(check, check->neighbours[i], end_node);
-      printf("   worked %d D: %d X %d Y %d\n", i, check->neighbours[i]->d, check->neighbours[i]->x, check->neighbours[i]->y);
 
-      push(&global, check->neighbours[i]);
+      proc_neighbour(check, check->neighbours[i], end_node);
+
+      push(global, check->neighbours[i]);
     }
   }  
-  struct g_node* current = end_node;
-  while(current->parent && current->neighbours[current->parent])
+  struct g_node* current = end_node->neighbours[end_node->parent];
+  while(current->neighbours[current->parent] != start_node)
     current = current->neighbours[current->parent];
-    printf("%d %d -> %d %d\n", current->x, current->y, start_node->x, start_node->y);
+  clear_list(g_list);
+  clear_stack(global);
   return current->x == start_node->x ? (start_node->y - current->y < 0 ? DOWN : UP) : (start_node->x - current->x > 0 ? LEFT : RIGHT); 
 }
 

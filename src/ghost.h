@@ -19,6 +19,8 @@ ghost* init_ghosts(float x, float y) // Creates a pointer to a ghost structure. 
     crt->nxt->type = ctype;
     crt->nxt->mode = CHASE;
     crt->nxt->last_contact = (int*)calloc(4, sizeof(int));
+    crt->nxt->last_x = 0;
+    crt->nxt->last_y = 0;
     ctype++;
     crt = crt->nxt;
   }
@@ -202,7 +204,7 @@ int get_random_dir(ghost* g, int* map, int w, int h)
   if(!dif)
     return 0;
   int i = rand()%4;
-  while(return_contact(map, w, h, g->s, i+1)!=0 || i == reverse_direction-1){ i = rand()%4; printf("Candidate is %d...\n", i);}
+  while(return_contact(map, w, h, g->s, i+1)!=0 || i == reverse_direction-1){ i = rand()%4; }
   int current_direction = i+1;
   for(int j = 0; j < 4; j++)
     g->last_contact[j] = return_contact(map, w, h, g->s, i+1);
@@ -211,11 +213,7 @@ int get_random_dir(ghost* g, int* map, int w, int h)
 
 void set_path(ghost* g, struct g_node** map, struct g_node_list* list, struct stack_node* stack_head, int w, int h, int destination_x, int destination_y)
 {
-  int x = posX(*g->s)/TLSZ, y = posY(*g->s)/TLSZ;
-  if(!map[x+w*y])
-    return;
-  g->s->wantDirection = shortest_path(map, x, y, destination_x, destination_y, w, h, stack_head);
-  clear_list(list);
+  g->s->wantDirection = shortest_path(map, x(*g->s), y(*g->s), destination_x, destination_y, w, h, stack_head, list);
 }
 
 void set_ghost_direction(ghost* g, map m, struct g_node** g_map, struct g_node_list* list, struct stack_node* stack_head)
@@ -224,16 +222,22 @@ void set_ghost_direction(ghost* g, map m, struct g_node** g_map, struct g_node_l
   switch(g->mode)
   {
   case CHASE:
-  if(!g->s->wantDirection && !g->s->direction)
-  {
-    set_path(g, g_map, list, stack_head, m.w, m.h, 26, 1);
-  }
+    if(g_map[x(*g->s)+y(*g->s)*m.w]!=NULL && x(*g->s)!=g->last_x && y(*g->s)!=g->last_y)
+    {
+      set_path(g, g_map, list, stack_head, m.w, m.h, 26, 1);
+      g->last_x = x(*g->s);
+      g->last_y = y(*g->s);
+    }
     break;
   case HOME:
     break;
   case FRIGHT:
-    if((d = get_random_dir(g, m.tileMap, m.w, m.h)))
+    if(g->s->wantDirection != 0 || (x(*g->s) != g->last_x && y(*g->s)!=g->last_y && g_map[x(*g->s)+y(*g->s)*m.w]!=NULL && (d = get_random_dir(g, m.tileMap, m.w, m.h))))
+    {
       g->s->wantDirection = d;
+      g->last_x = x(*g->s);
+      g->last_y = y(*g->s);
+    }
     return;
     break;
   default:

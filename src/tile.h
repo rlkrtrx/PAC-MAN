@@ -474,18 +474,12 @@ GLuint GenMapTex(const char* base_tex_path, tile* tile_map, int w, int h)
 		printf("Failed to load %s!\n", base_tex_path);
 		return 0;
 	}
-	else
-		printf("Loaded %s\n", base_tex_path);
 	uint32_t* colbuf = (uint32_t*)malloc(w*PX_TILE_WIDTH*h*PX_TILE_HEIGHT*sizeof(uint32_t));
 	for(int i = 0; i < w*PX_TILE_WIDTH*h*PX_TILE_HEIGHT; i++)
 		colbuf[i] = col_rgb(0, 0, 0); 
 	tile* current = tile_map;
 	while(current->nextTile!=NULL)
 	{
-		if(current->nextTile->state == 2 && current->nextTile->type == 2 && current->nextTile->x == 0)
-		{
-			printf("(x,y)=>(%d,%d) & (A)=(%d)\n", current->nextTile->x, current->nextTile->y, current->nextTile->angle);
-		}
 		int base_tex_x = current->nextTile->type+current->nextTile->invert, base_tex_y = current->nextTile->state-1;
 		uint32_t* current_tile_tex = make_tex_from_bmp(base_tex, width, height, PX_TILE_WIDTH, PX_TILE_HEIGHT, base_tex_x, base_tex_y);
 	  uint32_t* rotated_current_tile_tex = orthogonally_rotate_tex(current_tile_tex, norm((int)current->nextTile->angle/90), PX_TILE_WIDTH, PX_TILE_HEIGHT);
@@ -499,8 +493,8 @@ GLuint GenMapTex(const char* base_tex_path, tile* tile_map, int w, int h)
 	glBindTexture(GL_TEXTURE_2D, gl_tex);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, w*PX_TILE_WIDTH, h*PX_TILE_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8, &colbuf[0]);
 	glGenerateMipmap(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D, 0);

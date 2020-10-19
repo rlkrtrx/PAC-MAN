@@ -72,22 +72,35 @@ sct Sct(void)
   s.player2_box = init_tb(WINDOW_WIDTH-strlen("2UP")*TEXT_SF*8-50, 0, "2UP", strlen("2UP"), 1, s.f, TEXT_SF);
   s.points_box = init_tb(s.player1_box.w/2+s.player1_box.x-strlen("0"), TLSZ, "0", strlen("0"), 1, s.f, TEXT_SF);
   s.g_map = (struct g_node**)malloc(s.lvl.w * s.lvl.h * sizeof(struct g_node*));
+  for(int i = 0; i < s.lvl.w*s.lvl.h; i++)
+    s.g_map[i] = NULL;
   s.g_list = (struct g_node_list*)malloc(sizeof(struct g_node_list));
   s.g_list->next_node = NULL;
+  s.g_list->gnode_ptr = NULL;
   s.graph = ret_map_graph(s.lvl.tileMap, s.g_map, s.lvl.w, s.lvl.h);
   graph_to_list(s.g_list, s.g_map, s.lvl.w, s.lvl.h);
   s.stack_head = (struct stack_node*)malloc(sizeof(struct stack_node));
   s.stack_head->gnode_ptr = NULL;
   s.stack_head->next = NULL;
+  
   printf("Best Direction: ");
-  print_direction(shortest_path(s.g_map, 18, 11, 26, 1, s.lvl.w, s.lvl.h, s.stack_head));
+  print_direction(shortest_path(s.g_map, 21, 26, 15, 20, s.lvl.w, s.lvl.h, s.stack_head, s.g_list));
   printf("\n");
-  //print_direction(shortest_path(s.g_map, 21, 5, 26, 1, s.lvl.w, s.lvl.h, s.stack_head));
+
+  printf("Best Direction: ");
+  print_direction(shortest_path(s.g_map, 18, 11, 15, 20, s.lvl.w, s.lvl.h, s.stack_head, s.g_list));
   printf("\n");
-  if(s.g_map[18+5*s.lvl.w]/*->neighbours[2]*/)
-    printf("Exists!\n");
-  else
-    printf("Exist!\n");
+
+  printf("Best Direction: ");
+  print_direction(shortest_path(s.g_map, 1, 1, 15, 20, s.lvl.w, s.lvl.h, s.stack_head, s.g_list));
+  printf("\n");
+
+  //print_map(s.g_map, s.lvl.tileMap, s.lvl.w, s.lvl.h);
+
+  printf("Best Direction: ");
+  print_direction(shortest_path(s.g_map, 15, 11, 26, 1, s.lvl.w, s.lvl.h, s.stack_head, s.g_list));
+  printf("\n");
+
   center_tb(&s.high_score_box, WINDOW_WIDTH);
   return s;	
 }
@@ -115,7 +128,7 @@ void run(sct* s)
     s->lt = glfwGetTime();
     get_in(s);
     update_pacman_spr(s->pacman, s->ghosts, s->dt, s->lvl, &s->ctotal);
-    //update_ghosts(s->ghosts,s->pac_map, s->box_map, s->g_map, s->g_list, s->stack_head, s->dt, s->lvl);
+    update_ghosts(s->ghosts,s->pac_map, s->box_map, s->g_map, s->g_list, s->stack_head, s->dt, s->lvl);
 		render_tex_quad(s->pacPrg, s->lvl.map_vao, s->lvl.map_tex, 0, TLSZ, s->ortho);
     render_coins(s->lvl, s->ortho, s->pacPrg);
     render_moveable_spr(s->pacman, s->ghosts, s->pacPrg, s->ortho);
