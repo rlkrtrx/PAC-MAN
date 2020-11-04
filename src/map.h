@@ -174,7 +174,7 @@ struct g_node
 {
   uint16_t x, y;
   uint32_t d, c; // Distance and Change, respectively.
-  unsigned int parent:4;
+  int parent;
   int visited;
   struct g_node** neighbours;
 };
@@ -204,9 +204,14 @@ struct g_node* init_graph_node(int x, int y)
   ret_g->y = y;
   ret_g->d = 0xFFFF;
   ret_g->c = 0xFFFF; 
-  ret_g->parent = 5;
+  ret_g->parent = -1;
   ret_g->visited = 0;
   return ret_g;
+}
+
+int greater(int val)
+{
+  return val>0;
 }
 
 struct g_node* ret_map_graph(int* map, struct g_node** g_map, int w, int h)
@@ -226,7 +231,7 @@ struct g_node* ret_map_graph(int* map, struct g_node** g_map, int w, int h)
       struct g_node* current;
       for(int i = 0; i < 4; i++)
         count += contact_array[i];
-      switch(map[j*w+i])
+      switch(greater(map[j*w+i]))
       {
       case TRUE:
         top_nodes[i] = NULL;
@@ -259,6 +264,7 @@ struct g_node* ret_map_graph(int* map, struct g_node** g_map, int w, int h)
         top_nodes[i] = current; //Assign top node to g for the next row
         break;
       default:
+        
         break;
       }
       free(contact_array);
@@ -289,9 +295,11 @@ void push(struct stack_node* head, struct g_node* ptr)
     current = current->next;
   struct stack_node* new_node = (struct stack_node*)malloc(sizeof(struct stack_node));
   new_node->next = NULL;
+  printf("ptr data: %d %d %d\n", ptr->x, ptr->y, ptr->parent);
   new_node->gnode_ptr = ptr;
+  printf("ptr data: %d %d %d\n", ptr->x, ptr->y, ptr->parent);
   if(current->next)
-    new_node->next = current->next->next;  
+    new_node->next = current->next;  
   current->next = new_node;
 }
 
@@ -307,11 +315,9 @@ void clear_list(struct g_node_list* list)
   struct g_node_list* current = list;
   while(current->next_node!=NULL)
   {
-    printf("clearing..\n");
-    printf("%d %d\n", current->next_node->gnode_ptr->x, current->next_node->gnode_ptr->y);
     current->next_node->gnode_ptr->d = 0xFFFF;
     current->next_node->gnode_ptr->c = 0xFFFF;
-    current->next_node->gnode_ptr->parent = 5;
+    current->next_node->gnode_ptr->parent = -1;
     current->next_node->gnode_ptr->visited = 0;
     current = current->next_node;
   }
@@ -329,7 +335,7 @@ int perpendicular_distance(struct g_node* root, struct g_node* new_node)
 
 void proc_neighbour(struct g_node* root, struct g_node* neighbour, struct g_node* dest)
 {
-  neighbour->c = root->c + root->x == neighbour->x ? abs(root->y - neighbour->y) : abs(root->x - neighbour->x);
+  neighbour->c = root->x == neighbour->x ? abs(root->y - neighbour->y) : abs(root->x - neighbour->x);
   neighbour->d = distance(neighbour->x, neighbour->y, dest->x, dest->y)+neighbour->c;
   neighbour->parent = (root->x == neighbour->x ? (root->y - neighbour->y < 0 ? UP : DOWN) : (root->x - neighbour->x < 0 ? LEFT : RIGHT))-1;  
   neighbour->visited = 1;
@@ -337,16 +343,12 @@ void proc_neighbour(struct g_node* root, struct g_node* neighbour, struct g_node
 
 void list_stack(struct stack_node* head)
 {
-  struct stack_node** current_node = &head;
-  printf("Listing stack\n");
-  while(*current_node)
+  struct stack_node* current_node = head;
+  while(current_node->next)
   {
-    printf("LOOP 1\n");
-    if(!(*current_node)->gnode_ptr)
-      printf("0 ");
-    else
-      printf("x,y = %d %d ", (*current_node)->gnode_ptr->x, (*current_node)->gnode_ptr->y);
-    current_node = &((*current_node)->next);
+    if(current_node->next->gnode_ptr)
+      printf(" - %d %d %d %d - ", current_node->next->gnode_ptr->x, current_node->next->gnode_ptr->y, current_node->next->gnode_ptr->d, current_node->next->gnode_ptr->c);
+    current_node = current_node->next;
   }
   printf("\n");
 }
@@ -367,7 +369,7 @@ void print_map(struct g_node** g_map, int* map, int w, int h)
       if(g_map[i+j*w])
         printf("X ");
       else if(map[i+j*w])
-        printf("O ");
+        printf("%d ", map[i+j*w]);
       else
         printf("  ");
     }
@@ -378,39 +380,45 @@ void print_map(struct g_node** g_map, int* map, int w, int h)
 int shortest_path(struct g_node** g_map, int si, int sj, int di, int dj, int w, int h, struct stack_node* global, struct g_node_list* g_list)
 {
   struct g_node *start_node, *end_node;
-  if(!(start_node = g_map[sj*w+si]) || !(end_node = g_map[dj*w+di]))
+  if(!(start_node = g_map[sj*w+si]) || !(end_node = g_map[dj*w+di]) || (si == di && sj == dj))
     return 0;
   start_node->d = distance(si, sj, di, dj);
   start_node->c = 0;
   start_node->visited = 1;
+  start_node->parent = -1;
   push(global, start_node);
+  printf("%d %d\n", si, sj);
+  printf("%d\n", start_node->parent);
 
-  int achieved = 0;
-  int steps = 0;
   struct g_node** check_node = &global->next->gnode_ptr;
-  while(*check_node != end_node && global->next != NULL)
+  while(global->next->gnode_ptr != end_node && global->next != NULL)
   {
-    check_node = &global->next->gnode_ptr;
-    printf("%d %d\n", (*check_node)->x, (*check_node)->y);
+    struct g_node* check = global->next->gnode_ptr; 
     pop(global);
-    steps++;
 
-    struct g_node* check = *check_node; 
     if(!check)
       continue;
     for(int i = 0; i < 4; i++)
     {
       if((check->neighbours[i] == NULL) || (check->neighbours[i]->visited))
         continue;
+      printf("X %d Y %d Visited %d\n", check->neighbours[i]->x, check->neighbours[i]->y, check->neighbours[i]->visited);
 
       proc_neighbour(check, check->neighbours[i], end_node);
 
       push(global, check->neighbours[i]);
     }
   }  
+
+  printf("%d %d\n", di, dj);
+
   struct g_node* current = end_node->neighbours[end_node->parent];
-  while(current->neighbours[current->parent] != start_node)
+  printf("assignéd %d %d %d\n", current->parent, current->x, current->y);
+  while(current->parent != -1 && current->neighbours[current->parent] != start_node)
+  {
+    printf("loop... %d %d\n", current->x, current->neighbours[current->parent]->y);
     current = current->neighbours[current->parent];
+  }
   clear_list(g_list);
   clear_stack(global);
   return current->x == start_node->x ? (start_node->y - current->y < 0 ? DOWN : UP) : (start_node->x - current->x > 0 ? LEFT : RIGHT); 

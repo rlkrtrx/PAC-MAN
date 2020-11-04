@@ -84,22 +84,10 @@ sct Sct(void)
   s.stack_head->next = NULL;
   
   printf("Best Direction: ");
-  print_direction(shortest_path(s.g_map, 21, 26, 15, 20, s.lvl.w, s.lvl.h, s.stack_head, s.g_list));
+  print_direction(shortest_path(s.g_map, 15, 11, 1, 1, s.lvl.w, s.lvl.h, s.stack_head, s.g_list));
   printf("\n");
 
-  printf("Best Direction: ");
-  print_direction(shortest_path(s.g_map, 18, 11, 15, 20, s.lvl.w, s.lvl.h, s.stack_head, s.g_list));
-  printf("\n");
-
-  printf("Best Direction: ");
-  print_direction(shortest_path(s.g_map, 1, 1, 15, 20, s.lvl.w, s.lvl.h, s.stack_head, s.g_list));
-  printf("\n");
-
-  //print_map(s.g_map, s.lvl.tileMap, s.lvl.w, s.lvl.h);
-
-  printf("Best Direction: ");
-  print_direction(shortest_path(s.g_map, 15, 11, 26, 1, s.lvl.w, s.lvl.h, s.stack_head, s.g_list));
-  printf("\n");
+  print_map(s.g_map, s.lvl.tileMap, s.lvl.w, s.lvl.h);
 
   center_tb(&s.high_score_box, WINDOW_WIDTH);
   return s;	

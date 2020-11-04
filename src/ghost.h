@@ -15,7 +15,7 @@ ghost* init_ghosts(float x, float y) // Creates a pointer to a ghost structure. 
     crt->nxt->s->cfrmx = 1;
     crt->nxt->s->cfrmy = ctype;
     crt->nxt->s->direction = RIGHT;
-    crt->nxt->s->wantDirection = rand()%4+1;
+    crt->nxt->s->wantDirection = NONE;//rand()%4+1;
     crt->nxt->type = ctype;
     crt->nxt->mode = CHASE;
     crt->nxt->last_contact = (int*)calloc(4, sizeof(int));
@@ -26,24 +26,6 @@ ghost* init_ghosts(float x, float y) // Creates a pointer to a ghost structure. 
   }
   return g;
 }
-
-/*void fill_contact_array(int* map, int w, int h, spr s, int* initialized_contact)
-{
-  initialized_contact[0] = one(get_xy(map, w, h, posX(s)/TLSZ, posY(s)/TLSZ-1));
-  initialized_contact[1] = one(get_xy(map, w, h, posX(s)/TLSZ+1, posY(s)/TLSZ));
-  initialized_contact[2] = one(get_xy(map, w, h, posX(s)/TLSZ, posY(s)/TLSZ+1));
-  initialized_contact[3] = one(get_xy(map, w, h, posX(s)/TLSZ-1, posY(s)/TLSZ));
-}
-
-int* gen_contact_array(int* map, int w, int h, int x, int y)
-{
-  int* array = (int*)malloc(4*sizeof(int));
-  array[0] = y-1>=0 ? map[(y-1)*w+x] : 1;
-  array[1] = x+1<w ? map[y*w+x+1] : 1;
-  array[2] = y+1<h ? map[(y+1)*w+x] : 1;
-  array[3] = x-1>=0 ? map[y*w+x-1] : 1;
-  return &array[0];
-}*/
 
 int return_contact(int* map, int w, int h, spr* s, int dir)
 {
@@ -214,6 +196,8 @@ int get_random_dir(ghost* g, int* map, int w, int h)
 void set_path(ghost* g, struct g_node** map, struct g_node_list* list, struct stack_node* stack_head, int w, int h, int destination_x, int destination_y)
 {
   g->s->wantDirection = shortest_path(map, x(*g->s), y(*g->s), destination_x, destination_y, w, h, stack_head, list);
+  print_direction(g->s->wantDirection);
+  printf(" - %d %d\n", x(*g->s), y(*g->s));
 }
 
 void set_ghost_direction(ghost* g, map m, struct g_node** g_map, struct g_node_list* list, struct stack_node* stack_head)
@@ -222,9 +206,9 @@ void set_ghost_direction(ghost* g, map m, struct g_node** g_map, struct g_node_l
   switch(g->mode)
   {
   case CHASE:
-    if(g_map[x(*g->s)+y(*g->s)*m.w]!=NULL && x(*g->s)!=g->last_x && y(*g->s)!=g->last_y)
+    if((g_map[x(*g->s)+y(*g->s)*m.w]!=NULL && (x(*g->s)!=g->last_x || y(*g->s)!=g->last_y)))
     {
-      set_path(g, g_map, list, stack_head, m.w, m.h, 26, 1);
+      set_path(g, g_map, list, stack_head, m.w, m.h, 1, 1);
       g->last_x = x(*g->s);
       g->last_y = y(*g->s);
     }
