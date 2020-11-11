@@ -16,8 +16,7 @@ void free_tile_list(tile* head)
   while (head != NULL)
   {
     tmp = head;
-    head = head->nextTile;
-    free(tmp);
+    head = head->nextTile; free(tmp);
   }
 }
 
@@ -295,9 +294,7 @@ void push(struct stack_node* head, struct g_node* ptr)
     current = current->next;
   struct stack_node* new_node = (struct stack_node*)malloc(sizeof(struct stack_node));
   new_node->next = NULL;
-  printf("ptr data: %d %d %d\n", ptr->x, ptr->y, ptr->parent);
   new_node->gnode_ptr = ptr;
-  printf("ptr data: %d %d %d\n", ptr->x, ptr->y, ptr->parent);
   if(current->next)
     new_node->next = current->next;  
   current->next = new_node;
@@ -341,6 +338,14 @@ void proc_neighbour(struct g_node* root, struct g_node* neighbour, struct g_node
   neighbour->visited = 1;
 }
 
+void proc_neighbour_node(struct g_node* root, struct g_node* neighbour, int dest_x, int dest_y)
+{
+  neighbour->c = root->x == neighbour->x ? abs(root->y - neighbour->y) : abs(root->x - neighbour->x);
+  neighbour->d = distance(neighbour->x, neighbour->y, dest_x, dest_y)+neighbour->c;
+  neighbour->parent = (root->x == neighbour->x ? (root->y - neighbour->y < 0 ? UP : DOWN) : (root->x - neighbour->x < 0 ? LEFT : RIGHT))-1;  
+  neighbour->visited = 1;
+}
+
 void list_stack(struct stack_node* head)
 {
   struct stack_node* current_node = head;
@@ -358,6 +363,17 @@ void clear_stack(struct stack_node* head)
   struct stack_node* current = head;
   while(head->next != NULL)
     pop(head);
+}
+
+int is_destination(struct g_node* ap_node, int dest_x, int dest_y)
+{
+  if(ap_node->neighbours[ap_node->parent]->x == dest_x && ap_node->x == dest_x)
+    if((dest_y > ap_node->neighbours[ap_node->parent]->y && dest_y < ap_node->y) || (dest_y < ap_node->neighbours[ap_node->parent]->y && dest_y > ap_node->y))
+      return 1; 
+  if(ap_node->neighbours[ap_node->parent]->y == dest_x && ap_node->y == dest_x)
+    if((dest_x > ap_node->neighbours[ap_node->parent]->x && dest_y < ap_node->x) || (dest_y < ap_node->neighbours[ap_node->parent]->x && dest_x > ap_node->x))
+      return 1;
+  return 0;
 }
 
 void print_map(struct g_node** g_map, int* map, int w, int h)
@@ -387,8 +403,6 @@ int shortest_path(struct g_node** g_map, int si, int sj, int di, int dj, int w, 
   start_node->visited = 1;
   start_node->parent = -1;
   push(global, start_node);
-  printf("%d %d\n", si, sj);
-  printf("%d\n", start_node->parent);
 
   struct g_node** check_node = &global->next->gnode_ptr;
   while(global->next->gnode_ptr != end_node && global->next != NULL)
@@ -402,27 +416,17 @@ int shortest_path(struct g_node** g_map, int si, int sj, int di, int dj, int w, 
     {
       if((check->neighbours[i] == NULL) || (check->neighbours[i]->visited))
         continue;
-      printf("X %d Y %d Visited %d\n", check->neighbours[i]->x, check->neighbours[i]->y, check->neighbours[i]->visited);
-
       proc_neighbour(check, check->neighbours[i], end_node);
-
       push(global, check->neighbours[i]);
     }
   }  
 
-  printf("%d %d\n", di, dj);
-
   struct g_node* current = end_node->neighbours[end_node->parent];
-  printf("assignéd %d %d %d\n", current->parent, current->x, current->y);
   while(current->parent != -1 && current->neighbours[current->parent] != start_node)
-  {
-    printf("loop... %d %d\n", current->x, current->neighbours[current->parent]->y);
     current = current->neighbours[current->parent];
-  }
   clear_list(g_list);
   clear_stack(global);
   return current->x == start_node->x ? (start_node->y - current->y < 0 ? DOWN : UP) : (start_node->x - current->x > 0 ? LEFT : RIGHT); 
 }
-
 
 #endif

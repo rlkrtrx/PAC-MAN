@@ -196,8 +196,6 @@ int get_random_dir(ghost* g, int* map, int w, int h)
 void set_path(ghost* g, struct g_node** map, struct g_node_list* list, struct stack_node* stack_head, int w, int h, int destination_x, int destination_y)
 {
   g->s->wantDirection = shortest_path(map, x(*g->s), y(*g->s), destination_x, destination_y, w, h, stack_head, list);
-  print_direction(g->s->wantDirection);
-  printf(" - %d %d\n", x(*g->s), y(*g->s));
 }
 
 void set_ghost_direction(ghost* g, map m, struct g_node** g_map, struct g_node_list* list, struct stack_node* stack_head)
@@ -277,9 +275,16 @@ void update_ghost_state(ghost* g)
 void update_ghosts(ghost* head, int* table, int* box_map, struct g_node** g_map, struct g_node_list* g_list, struct stack_node* stack_head, float dt, map m)
 {
   ghost* c_ghost = head;
+  int g = 0;
   while(c_ghost->nxt!=NULL)
   {
     set_ghost_direction(c_ghost->nxt, m, g_map, g_list, stack_head);
+    if(g == 3)
+    {
+      if(print_direction(c_ghost->nxt->s->direction))
+        printf("\n");
+    }
+    g++;
     update_ghost_state(c_ghost->nxt);
     update_spr(c_ghost->nxt->s, dt, c_ghost->nxt->mode == FRIGHT ? 5 : 8, m, 1, 1, c_ghost->nxt->mode); 
     c_ghost = c_ghost->nxt;

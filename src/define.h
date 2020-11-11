@@ -25,7 +25,7 @@
 #define D 1
 #define L -1
 
-void print_direction(int dir)
+int print_direction(int dir)
 {
     switch(dir)
     {
@@ -42,8 +42,10 @@ void print_direction(int dir)
             printf("LEFT");
         break;
         default:
+        return 0;
         break;
     }
+    return 1;
 }
 
 #endif

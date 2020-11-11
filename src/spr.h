@@ -223,7 +223,7 @@ void update_spr(spr* s, float dt, float speed, map m, int ghost, int box_avail, 
   switch(s->direction)
   {
   case UP:
-    if(!colU(s->x, s->y-TLSZ/2, m, box_avail))
+    if(!colU(s->x, s->y+TLSZ/2-TLSZ, m, box_avail))
       s->y -= spd;
     else
     {
@@ -234,7 +234,7 @@ void update_spr(spr* s, float dt, float speed, map m, int ghost, int box_avail, 
     }
     break;
   case RIGHT:
-    if(!colR(s->x+spd+TLSZ, s->y, m, box_avail))
+    if(!colR(s->x+TLSZ/2+TLSZ, s->y, m, box_avail))
       s->x += spd;
     else
     {
@@ -245,7 +245,7 @@ void update_spr(spr* s, float dt, float speed, map m, int ghost, int box_avail, 
     }
     break;
   case DOWN:
-    if(!colD(s->x, s->y+TLSZ+spd, m, box_avail))
+    if(!colD(s->x, s->y+TLSZ/2+TLSZ, m, box_avail))
       s->y += spd;
     else
     {
@@ -256,7 +256,7 @@ void update_spr(spr* s, float dt, float speed, map m, int ghost, int box_avail, 
     }
     break;
   case LEFT:
-    if(!colL(s->x-spd, s->y, m, box_avail))
+    if(!colL(s->x+TLSZ/2-TLSZ, s->y, m, box_avail))
       s->x -= spd;
     else
     {
