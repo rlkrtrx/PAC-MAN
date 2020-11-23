@@ -225,7 +225,7 @@ struct g_node* ret_map_graph(int* map, struct g_node** g_map, int w, int h)
   {
     for(int i = 0; i < w; i++)
     {
-      int* contact_array = create_contact_array(map, w, h, i, j);
+      int* contact_array = create_oob_contact_array(map, w, h, i, j);
       int count = 0;
       struct g_node* current;
       for(int i = 0; i < 4; i++)
@@ -343,7 +343,7 @@ void proc_neighbour_node(struct g_node* root, struct g_node* neighbour, int dest
   neighbour->c = root->x == neighbour->x ? abs(root->y - neighbour->y) : abs(root->x - neighbour->x);
   neighbour->d = distance(neighbour->x, neighbour->y, dest_x, dest_y)+neighbour->c;
   neighbour->parent = (root->x == neighbour->x ? (root->y - neighbour->y < 0 ? UP : DOWN) : (root->x - neighbour->x < 0 ? LEFT : RIGHT))-1;  
-  neighbour->visited = 1;
+  //neighbour->visited = 1;
 }
 
 void list_stack(struct stack_node* head)
@@ -368,11 +368,15 @@ void clear_stack(struct stack_node* head)
 int is_destination(struct g_node* ap_node, int dest_x, int dest_y)
 {
   if(ap_node->neighbours[ap_node->parent]->x == dest_x && ap_node->x == dest_x)
-    if((dest_y > ap_node->neighbours[ap_node->parent]->y && dest_y < ap_node->y) || (dest_y < ap_node->neighbours[ap_node->parent]->y && dest_y > ap_node->y))
+  {
+    if((dest_y > ap_node->neighbours[ap_node->parent]->y && dest_y <= ap_node->y) || (dest_y < ap_node->neighbours[ap_node->parent]->y && dest_y >= ap_node->y))
       return 1; 
-  if(ap_node->neighbours[ap_node->parent]->y == dest_x && ap_node->y == dest_x)
-    if((dest_x > ap_node->neighbours[ap_node->parent]->x && dest_y < ap_node->x) || (dest_y < ap_node->neighbours[ap_node->parent]->x && dest_x > ap_node->x))
+  }
+  else if(ap_node->neighbours[ap_node->parent]->y == dest_y && ap_node->y == dest_y)
+  {
+    if((dest_x > ap_node->neighbours[ap_node->parent]->x && dest_x <= ap_node->x) || (dest_x < ap_node->neighbours[ap_node->parent]->x && dest_x >= ap_node->x))
       return 1;
+  }
   return 0;
 }
 
@@ -396,7 +400,8 @@ void print_map(struct g_node** g_map, int* map, int w, int h)
 int shortest_path(struct g_node** g_map, int si, int sj, int di, int dj, int w, int h, struct stack_node* global, struct g_node_list* g_list)
 {
   struct g_node *start_node, *end_node;
-  if(!(start_node = g_map[sj*w+si]) || !(end_node = g_map[dj*w+di]) || (si == di && sj == dj))
+  int goal = 0;
+  if(!(start_node = g_map[sj*w+si]) || /*!(end_node = g_map[dj*w+di]) ||*/ (si == di && sj == dj))
     return 0;
   start_node->d = distance(si, sj, di, dj);
   start_node->c = 0;
@@ -405,10 +410,11 @@ int shortest_path(struct g_node** g_map, int si, int sj, int di, int dj, int w, 
   push(global, start_node);
 
   struct g_node** check_node = &global->next->gnode_ptr;
-  while(global->next->gnode_ptr != end_node && global->next != NULL)
+  while(!goal && global->next != NULL)
   {
     struct g_node* check = global->next->gnode_ptr; 
     pop(global);
+    check->visited = 1;
 
     if(!check)
       continue;
@@ -416,12 +422,18 @@ int shortest_path(struct g_node** g_map, int si, int sj, int di, int dj, int w, 
     {
       if((check->neighbours[i] == NULL) || (check->neighbours[i]->visited))
         continue;
-      proc_neighbour(check, check->neighbours[i], end_node);
+        
+      proc_neighbour_node(check, check->neighbours[i], di, dj);
       push(global, check->neighbours[i]);
+      if(is_destination(check->neighbours[i], di, dj))
+      { 
+        end_node = global->next->gnode_ptr;
+        goal = 1;
+        break;
+      }
     }
   }  
-
-  struct g_node* current = end_node->neighbours[end_node->parent];
+  struct g_node* current = end_node;
   while(current->parent != -1 && current->neighbours[current->parent] != start_node)
     current = current->neighbours[current->parent];
   clear_list(g_list);

@@ -2,8 +2,7 @@
 #define __GHOST__
 
 ghost* init_ghosts(float x, float y) // Creates a pointer to a ghost structure. Fully initialized. 
-{
-  ghost* g = (ghost*)malloc(sizeof(ghost));  
+{ ghost* g = (ghost*)malloc(sizeof(ghost));  
   g->nxt = NULL;
   ghost* crt = g;
   int ctype = 1;
@@ -198,15 +197,16 @@ void set_path(ghost* g, struct g_node** map, struct g_node_list* list, struct st
   g->s->wantDirection = shortest_path(map, x(*g->s), y(*g->s), destination_x, destination_y, w, h, stack_head, list);
 }
 
-void set_ghost_direction(ghost* g, map m, struct g_node** g_map, struct g_node_list* list, struct stack_node* stack_head)
+void set_ghost_direction(ghost* g, map m, struct g_node** g_map, struct g_node_list* list, struct stack_node* stack_head, spr* pac_spr)
 {
   int d;
   switch(g->mode)
   {
   case CHASE:
-    if((g_map[x(*g->s)+y(*g->s)*m.w]!=NULL && (x(*g->s)!=g->last_x || y(*g->s)!=g->last_y)))
+    if((g_map[x(*g->s)+y(*g->s)*m.w]!=NULL && ((x(*g->s)!=g->last_x || y(*g->s)!=g->last_y) || g->s->direction == NONE)))
     {
-      set_path(g, g_map, list, stack_head, m.w, m.h, 1, 1);
+      printf("At intersection...\n");
+      set_path(g, g_map, list, stack_head, m.w, m.h, posX(*pac_spr)/TLSZ, posY(*pac_spr)/TLSZ);
       g->last_x = x(*g->s);
       g->last_y = y(*g->s);
     }
@@ -272,21 +272,26 @@ void update_ghost_state(ghost* g)
   } 
 }
 
-void update_ghosts(ghost* head, int* table, int* box_map, struct g_node** g_map, struct g_node_list* g_list, struct stack_node* stack_head, float dt, map m)
+void update_ghosts(ghost* head, int* table, int* box_map, struct g_node** g_map, struct g_node_list* g_list, struct stack_node* stack_head, float dt, map m, spr* pac_spr)
 {
   ghost* c_ghost = head;
   int g = 0;
   while(c_ghost->nxt!=NULL)
   {
-    set_ghost_direction(c_ghost->nxt, m, g_map, g_list, stack_head);
-    if(g == 3)
+    set_ghost_direction(c_ghost->nxt, m, g_map, g_list, stack_head, pac_spr);
+    /*if(g == 3)
     {
       if(print_direction(c_ghost->nxt->s->direction))
         printf("\n");
-    }
+    }*/
     g++;
     update_ghost_state(c_ghost->nxt);
     update_spr(c_ghost->nxt->s, dt, c_ghost->nxt->mode == FRIGHT ? 5 : 8, m, 1, 1, c_ghost->nxt->mode); 
+    printf("G%d Direction:", g);
+    print_direction(c_ghost->nxt->s->direction);
+    printf(" Want Direction: ");
+    print_direction(c_ghost->nxt->s->wantDirection);
+    printf(" Mode %d\n", c_ghost->nxt->mode);
     c_ghost = c_ghost->nxt;
   }
 }

@@ -31,19 +31,14 @@ int print_direction(int dir)
     {
         case UP:
             printf("UP");
-        break;
         case RIGHT:
             printf("RIGHT");
-        break;
         case DOWN:
             printf("DOWN");
-        break;
         case LEFT:
             printf("LEFT");
-        break;
         default:
-        return 0;
-        break;
+          printf("NONE");
     }
     return 1;
 }

@@ -84,7 +84,7 @@ sct Sct(void)
   s.stack_head->next = NULL;
   
   printf("Best Direction: ");
-  print_direction(shortest_path(s.g_map, 15, 11, 1, 1, s.lvl.w, s.lvl.h, s.stack_head, s.g_list));
+  //print_direction(shortest_path(s.g_map, 9, 17, 3, 14, s.lvl.w, s.lvl.h, s.stack_head, s.g_list));
   printf("\n");
 
   print_map(s.g_map, s.lvl.tileMap, s.lvl.w, s.lvl.h);
@@ -116,7 +116,7 @@ void run(sct* s)
     s->lt = glfwGetTime();
     get_in(s);
     update_pacman_spr(s->pacman, s->ghosts, s->dt, s->lvl, &s->ctotal);
-    update_ghosts(s->ghosts,s->pac_map, s->box_map, s->g_map, s->g_list, s->stack_head, s->dt, s->lvl);
+    update_ghosts(s->ghosts,s->pac_map, s->box_map, s->g_map, s->g_list, s->stack_head, s->dt, s->lvl, s->pacman);
 		render_tex_quad(s->pacPrg, s->lvl.map_vao, s->lvl.map_tex, 0, TLSZ, s->ortho);
     render_coins(s->lvl, s->ortho, s->pacPrg);
     render_moveable_spr(s->pacman, s->ghosts, s->pacPrg, s->ortho);

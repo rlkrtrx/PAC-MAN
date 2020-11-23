@@ -22,6 +22,14 @@ int get_xy(int* map, int w, int h, int x, int y)
     return 0;
 }
 
+int get_oob_xy(int* map, int w, int h, int x, int y)
+{
+  if(!(x>=w||x<0) && !(y>=h||y<0))
+    return map[y*w+x];
+  else
+    return 2;
+}
+
 int get_quad_xy(int* map, int w, int h, int x, int y)
 {
   if(!(x>=w||x<0) && !(y>=h||y<0))
@@ -60,6 +68,16 @@ int* create_contact_array(int* map, int w, int h, int x, int y)
   contact_array[1] = one(get_xy(map, w, h, x+1, y));
   contact_array[2] = one(get_xy(map, w, h, x, y+1));
   contact_array[3] = one(get_xy(map, w, h, x-1, y));
+  return contact_array;
+}
+
+int* create_oob_contact_array(int* map, int w, int h, int x, int y)
+{
+  int* contact_array = (int*)malloc(4*sizeof(int));
+  contact_array[0] = one(get_oob_xy(map, w, h, x, y-1));
+  contact_array[1] = one(get_oob_xy(map, w, h, x+1, y));
+  contact_array[2] = one(get_oob_xy(map, w, h, x, y+1));
+  contact_array[3] = one(get_oob_xy(map, w, h, x-1, y));
   return contact_array;
 }
 

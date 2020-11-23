@@ -271,6 +271,8 @@ void update_spr(spr* s, float dt, float speed, map m, int ghost, int box_avail, 
   }
   if(!ghost && ghost_type != HOME)
     animate_spr(s, 22);
+  s->x = fmodf(s->x, WINDOW_WIDTH);
+  s->y = fmodf(s->y, WINDOW_HEIGHT);
 }
 
 int dir_opposite(int dir)
